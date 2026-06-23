@@ -1,0 +1,185 @@
+const express = require("express");
+const cors = require("cors");
+const mysql = require("mysql2")
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const db = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "natacao"
+});
+
+db.connect((erro) => {
+    if (erro) {
+        console.log("Erro ao conectar");
+        console.log(erro);
+        return;
+    }
+    console.log("Conectado com sucesso");
+});
+
+app.get("/", (req, res) => {
+    res.json({
+        mensagem: "API funcionando"
+    })
+})
+
+app.post("/alunos", (req, res) => {
+    const {
+        nome, idade, telefone, nivel, horario
+    } = req.body
+
+    if (!nome || !idade || !nivel || !horario || !telefone) {
+        return res.status(400).json({
+            erro: "Preencha todos os campos."
+        })
+    }
+    if (idade <= 4) {
+        return res.status(400).json({
+            erro: "Você deve ser maior que 4 anos."
+        })
+    }
+    if (idade > 100) {
+        return res.status(400).json({
+            erro: "Você já é velho de guerra amigão!"
+        })
+    }
+    if (nome.length <= 3) {
+        return res.status(400).json({
+            erro: "Nome curto demais!"
+        })
+    }
+
+    const verificaSQL = "SELECT * FROM alunos WHERE nome = ?";
+    db.query(verificaSQL, [nome],
+        (erro, resultado) => {
+            if (erro) {
+                return res.status(500).json(erro);
+            }
+            if (resultado.length > 0) {
+                return res.status(400).json({
+                    erro: "Já existe esse nome cadastrado no banco de dados!"
+                })
+            }
+            const inserirSQL = `INSERT INTO alunos (nome, idade, telefone, nivel, horario)
+            VALUES ( ? , ? , ? , ? , ?)`
+            db.query(
+                inserirSQL,
+                [nome, idade, telefone, nivel, horario],
+                (erro, resultado) => {
+                    if (erro) {
+                        return res.status(500).json(erro);
+                    }
+                    res.status(201).json({
+                        mensagem: "Aluno cadastrado!",
+                        id: resultado.insertId
+                    });
+                }
+            );
+        }
+    )
+});
+
+app.get("/alunos", (req, res) => {
+    db.query(
+        "SELECT * FROM alunos", (erro, resultado) => {
+            if (erro) {
+                return res.status(500).json(erro);
+            }
+            res.json(resultado);
+        }
+    )
+})
+
+app.delete("/alunos/:id", (req, res) => {
+    const id = req.params.id;
+    db.query(" DELETE FROM alunos WHERE id = ? ",
+        [id], (erro, resultado) => {
+            if (erro) {
+                return res.status(500).json(erro);
+            } if (resultado.affectedRows === 0) {
+                return res.status(404).json({
+                    erro: "Aluno não encontrado!"
+                });
+            }
+            res.json({
+                mensagem: "Aluno removido!"
+            });
+        });
+});
+
+app.put("/alunos/:id", (req, res) => {
+    const id = req.params.id
+    db.query("SELECT ativo FROM alunos WHERE id = ?", [id], (erro, resultado) => {
+        if (erro) {
+            return res.status(500).json(erro);
+        }
+        if (resultado.length === 0) {
+            return res.status(404).json({
+                erro: "Aluno não encontrado!"
+            })
+        }
+        const novoStatus =
+            resultado[0].ativo ? 0 : 1;
+
+        db.query("UPDATE alunos SET ativo = ? WHERE id = ?", [novoStatus, id], (erro) => {
+            if (erro) {
+                return res.status(500).json(erro);
+            }
+            res.json({
+                mensagem: "Aluno atualizado!"
+            });
+        });
+    });
+});
+
+let incorretas = 0;
+let bloqueado = false;
+
+app.post("/admin", (req, res) => {
+    const { senha } = req.body;
+
+    if (bloqueado === true) {
+        return res.status(403).json({
+            erro: "Tentativas excedentes! Sistema bloqueado!"
+        })
+    }
+    if (!senha) {
+        return res.status(400).json({
+            erro: "Senha inválida!"
+        })
+    }
+    if (senha === "adm123") {
+        incorretas = 0;
+        return res.json({ autenticado: true });
+    }
+
+    incorretas++;
+    if (incorretas >= 3) {
+        bloqueado = true;
+        return res.status(403).json({
+            erro: "Sistema bloqueado!"
+        })
+    }
+    return res.status(401).json({
+        erro: `Senha incorreta. Faltam ${3 - incorretas} até o bloqueio do sistema!`
+    })
+})
+
+app.listen(3000, () => {
+    console.log("Servidor rodando! Em: ")
+    console.log("http://localhost:3000")
+})
+
+//post = salvar dados
+//get = puxar dados internos
+//delete = deletar dados
+//put = atualizar dados
+//req = faz a requisao e procura informação/documento
+//res = resposta pro frontend, mandar informação do backend para o frontend, onde faz aparecer pro usuário
+//status code = 400, 404 - Página nao encontrada, 200, 201, 501
+//localhost:3000
