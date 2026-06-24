@@ -1,4 +1,4 @@
-const API = "http://localhost:3000"
+const API = windows.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:3000" : "https://render.onrender.com";
 
 async function cadastrarAluno(event) {
 
@@ -9,7 +9,7 @@ async function cadastrarAluno(event) {
     const horario = document.getElementById("horario").value;
     const telefone = Number(document.getElementById("telefone").value);
 
-    const novoAluno = { nome, idade, telefone, nivel, horario };
+    const novoAluno = { nome, idade, telefone, nivel, horario };		
 
     try {
         const resposta = await fetch(`${API}/alunos`,
@@ -152,6 +152,14 @@ function logoutAdm() {
     sessionStorage.removeItem("admin_logado");
     window.location.reload();
 }
+
+function mudarCor(){
+    const button = document.getElementById("buttonCor")
+
+    button.addEventListener("click", function(){
+        button.style.color = "red";
+    })
+};
 
 carregarAlunos();
 verificar();
