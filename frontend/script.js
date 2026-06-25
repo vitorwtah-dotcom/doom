@@ -1,4 +1,4 @@
-const API = windows.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:3000" : "https://doom-2-gm1h.onrender.com";
+const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:3000" : "https://doom-2-gm1h.onrender.com";
 
 async function cadastrarAluno(event) {
 
