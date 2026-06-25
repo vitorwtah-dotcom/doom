@@ -23,13 +23,15 @@ db.connect((erro) => {
     }
     console.log("Conectado com sucesso");
     const criarTabelaSQL = ` 
-    CREATE TABLE IF NOT EXISTS alunos (
-      id int auto_increment primary key,
-      nome varchar(70) not null,
-      nivel varchar(50) unique not null,
-      horario varchar(50) not null,
-      ativo boolean default true
-    );
+CREATE TABLE IF NOT EXISTS alunos1 (
+  id int auto_increment primary key,
+  nome varchar(70) not null,
+  idade int not null,
+  telefone varchar(20) not null,
+  nivel varchar(50) not null,
+  horario varchar(50) not null,
+  ativo boolean default true
+);
     `;
     db.query(criarTabelaSQL, (erroTabela => {
         if(erroTabela) {
@@ -72,7 +74,7 @@ app.post("/alunos", (req, res) => {
         })
     }
 
-    const verificaSQL = "SELECT * FROM alunos WHERE nome = ?";
+    const verificaSQL = "SELECT * FROM alunos1 WHERE nome = ?";
     db.query(verificaSQL, [nome],
         (erro, resultado) => {
             if (erro) {
@@ -83,8 +85,8 @@ app.post("/alunos", (req, res) => {
                     erro: "Já existe esse nome cadastrado no banco de dados!"
                 })
             }
-            const inserirSQL = `INSERT INTO alunos (nome, idade, telefone, nivel, horario)
-            VALUES ( ? , ? , ? , ? , ?)`
+            const inserirSQL = `INSERT INTO alunos1 (nome, idade, telefone, nivel, horario)
+    VALUES( ? , ? , ? , ? , ?)`
             db.query(
                 inserirSQL,
                 [nome, idade, telefone, nivel, horario],
@@ -104,7 +106,7 @@ app.post("/alunos", (req, res) => {
 
 app.get("/alunos", (req, res) => {
     db.query(
-        "SELECT * FROM alunos", (erro, resultado) => {
+        "SELECT * FROM alunos1", (erro, resultado) => {
             if (erro) {
                 return res.status(500).json(erro);
             }
@@ -115,7 +117,7 @@ app.get("/alunos", (req, res) => {
 
 app.delete("/alunos/:id", (req, res) => {
     const id = req.params.id;
-    db.query(" DELETE FROM alunos WHERE id = ? ",
+    db.query(" DELETE FROM alunos1 WHERE id = ? ",
         [id], (erro, resultado) => {
             if (erro) {
                 return res.status(500).json(erro);
@@ -132,7 +134,7 @@ app.delete("/alunos/:id", (req, res) => {
 
 app.put("/alunos/:id", (req, res) => {
     const id = req.params.id
-    db.query("SELECT ativo FROM alunos WHERE id = ?", [id], (erro, resultado) => {
+    db.query("SELECT ativo FROM alunos1 WHERE id = ?", [id], (erro, resultado) => {
         if (erro) {
             return res.status(500).json(erro);
         }
@@ -144,7 +146,7 @@ app.put("/alunos/:id", (req, res) => {
         const novoStatus =
             resultado[0].ativo ? 0 : 1;
 
-        db.query("UPDATE alunos SET ativo = ? WHERE id = ?", [novoStatus, id], (erro) => {
+        db.query("UPDATE alunos1 SET ativo = ? WHERE id = ?", [novoStatus, id], (erro) => {
             if (erro) {
                 return res.status(500).json(erro);
             }
@@ -184,14 +186,14 @@ app.post("/admin", (req, res) => {
         })
     }
     return res.status(401).json({
-        erro: `Senha incorreta. Faltam ${3 - incorretas} até o bloqueio do sistema!`
+        erro: `Senha incorreta.Faltam ${ 3 - incorretas } até o bloqueio do sistema!`
     })
 })
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log("Servidor rodando! Em: ")
-    console.log(`porta ${PORT}`)
+    console.log(`porta ${ PORT } `)
 })
 
 //post = salvar dados
